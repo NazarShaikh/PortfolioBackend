@@ -8,7 +8,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: "https://your-frontend-link.onrender.com", // replace with actual link
+  methods: "GET,POST",
+};
+
+app.use(cors(corsOptions));
+
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
