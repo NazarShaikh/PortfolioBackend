@@ -1,55 +1,53 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const bodyParser = require("body-parser");
-require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = 5000; // Local port
+const MONGO_URI = "mongodb://127.0.0.1:27017/contact-form"; // Local MongoDB
 
-// Middleware
-const corsOptions = {
-  origin: "https://your-frontend-link.onrender.com", // replace with actual link
-  methods: "GET,POST",
-};
+// Allow requests from any local frontend (no deployed link needed)
+app.use(cors());
+app.use(express.json());
 
-app.use(cors(corsOptions));
+// Connect to Local MongoDB
+mongoose
+  .connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch((err) => console.error("❌ MongoDB Error:", err));
 
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("MongoDB Connected"))
-.catch((err) => console.error("MongoDB Error:", err));
-
-// Schema
+// Schema & Model
 const ContactSchema = new mongoose.Schema({
   name: String,
   email: String,
   message: String,
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
 });
-
 const Contact = mongoose.model("Contact", ContactSchema);
 
-// POST Route to Save Contact Form
+// Test Route
+app.get("/", (_req, res) => res.send("Portfolio backend is running locally!"));
+
+// POST /contact
 app.post("/contact", async (req, res) => {
   try {
     const { name, email, message } = req.body;
-    const newContact = new Contact({ name, email, message });
-    await newContact.save();
+
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+
+    await new Contact({ name, email, message }).save();
     res.status(200).json({ message: "Message received!" });
   } catch (err) {
-    console.error(err);
+    console.error("POST /contact error:", err);
     res.status(500).json({ error: "Something went wrong." });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
